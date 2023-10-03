@@ -102,3 +102,85 @@ Select SUM(TotalDue) as order_Amount,datepart(YEAR,OrderDate) as year
 from Sales.SalesOrderHeader
 group by datepart(YEAR,OrderDate)
 order by datepart(YEAR,OrderDate)
+
+--18)From the following table write a query in SQL to retrieve the total sales for each year. Filter the result set for 
+--those orders where order year is on or before 2016. Return the year part of orderdate and total due amount. Sort 
+--the result in ascending order on year part of order date
+
+Select SUM(TotalDue) as order_Amount,datepart(YEAR,OrderDate) as year 
+from Sales.SalesOrderHeader
+where datepart(YEAR,OrderDate) <= '2016'
+group by datepart(YEAR,OrderDate)
+order by datepart(YEAR,OrderDate)
+
+--19. From the following table write a query in SQL to find the contacts who are designated as a manager in various departments.
+--Returns ContactTypeID, name. Sort the result set in descending order.
+
+Select ContactTypeID,Name 
+from Person.ContactType
+where Name like '%Manager%'
+order by Name desc
+
+--20. From the following tables write a query in SQL to make a list of contacts who are designated as 'Purchasing Manager'. Return BusinessEntityID, LastName, and FirstName columns. Sort the result set in ascending order of LastName, and FirstName.
+
+Select pp.BusinessEntityID,pp.FirstName,pp.LastName from 
+Person.BusinessEntityContact bp inner join Person.ContactType pc 
+on bp.ContactTypeID = pc.ContactTypeID
+right join Person.Person pp on bp.BusinessEntityID = pp.BusinessEntityID
+order by pp.FirstName,pp.LastName
+
+--21) From the following tables write a query in SQL to retrieve the salesperson for each PostalCode who belongs to a territory and SalesYTD is not zero. Return row numbers of each group of PostalCode, last name, salesytd, postalcode column. Sort the salesytd of each postalcode group in descending order. Shorts the postalcode in ascending order.
+
+Select LastName,SalesYTD,PostalCode, ROW_NUMBER() OVER (PARTITION BY PostalCode ORDER BY SalesYTD DESC) AS "Row Number"
+from Sales.SalesPerson sp inner join person.Person pp 
+ on sp.BusinessEntityID = pp.BusinessEntityID inner join  person.Address pa 
+ on sp.BusinessEntityID = pa.AddressID
+ and SalesYTD <> 0 and TerritoryID is not null
+ order by PostalCode asc
+ 
+ --22) From the following table write a query in SQL to count the number of contacts for combination of each type and name. Filter the output for those who have 100 or more contacts. Return ContactTypeID and ContactTypeName and BusinessEntityContact. Sort the result set in descending order on number of contacts.
+ Select * from Person.BusinessEntityContact
+ Select * from Person.ContactType
+ 
+ Select bc.ContactTypeID,Name, COUNT(pc.ContactTypeID) as noofcontact from Person.BusinessEntityContact bc
+ inner join Person.ContactType pc
+ on bc.ContactTypeID = pc.ContactTypeID
+ group by bc.ContactTypeID,Name
+ having COUNT(pc.ContactTypeID) > 100
+ 
+ 
+ --23. From the following table write a query in SQL to retrieve the RateChangeDate, full name (first name, middle name and last name) and weekly salary (40 hours in a week) of employees. In the output the RateChangeDate should appears in date format. Sort the output in ascending order on NameInFull.
+ 
+ --select * from HumanResources.EmployeePayHistory
+--select * from Person.Person
+ 
+Select convert(varchar(10),RateChangeDate,103) RateChangeDate,FirstName +' '+ MiddleName +' '+LastName FullName, (Rate*40) as weeklySalary 
+from HumanResources. EmployeePayHistory EPH
+inner join Person.Person pp 
+ON EPH.BusinessEntityID = pp.BusinessEntityID
+order by FullName asc
+
+--24. From the following tables write a query in SQL to calculate and display the latest weekly salary of each employee. Return RateChangeDate, full name (first name, middle name and last name) and weekly salary (40 hours in a week) of employees Sort the output in ascending order on NameInFull.
+
+--select * from HumanResources.EmployeePayHistory where BusinessEntityID=4
+--select * from Person.Person
+ 
+Select PP.BusinessEntityID,convert(varchar(10),RateChangeDate,103) RateChangeDate,FirstName +' '+ MiddleName +' '+LastName FullName, (Rate*40) as weeklySalary 
+from HumanResources. EmployeePayHistory EPH
+inner join Person.Person pp 
+ON EPH.BusinessEntityID = pp.BusinessEntityID
+WHERE EPH.RateChangeDate IN (SELECT MAX(RateChangeDate) FROM HumanResources.EmployeePayHistory EP WHERE BusinessEntityID =  EPH.BusinessEntityID )
+order by FullName asc
+
+--25. From the following table write a query in SQL to find the sum, average, count, minimum, and maximum order quentity for those orders whose id are 43659 and 43664. Return SalesOrderID, ProductID, OrderQty, sum, average, count, max, and min order quantity.
+
+Select * from Sales.SalesOrderDetail
+
+Select SalesOrderID,ProductID,OrderQty, SUM(OrderQty) as TotalQut,
+AVG(OrderQty) AverageQty,
+COUNT(OrderQty) NoOfOrders,
+MAX(OrderQty) MaximunQty,
+MIN(OrderQty)MinimunQty
+from Sales.SalesOrderDetail
+where SalesOrderID in (43659,43664)
+group by SalesOrderID,ProductID,OrderQty
